@@ -1028,3 +1028,15 @@ vim.api.nvim_set_hl(0, 'EndOfBuffer', { bg = 'none' })
 vim.o.laststatus = 1
 vim.o.cmdheight = 0
 
+-- Copy to local clipboard over SSH / TTY using OSC52
+vim.g.clipboard = {
+  name = 'OSC52',
+  copy = {
+    ['+'] = require('vim.ui.clipboard.osc52').copy '+',
+    ['*'] = require('vim.ui.clipboard.osc52').copy '*',
+  },
+  paste = {
+    ['+'] = require('vim.ui.clipboard.osc52').paste '+',
+    ['*'] = require('vim.ui.clipboard.osc52').paste '*',
+  },
+}
