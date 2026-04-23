@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -163,6 +163,12 @@ vim.o.scrolloff = 10
 -- instead raise a dialog asking if you wish to save the current file(s)
 -- See `:help 'confirm'`
 vim.o.confirm = true
+
+-- Makes diffs look way less chaotic
+vim.opt.diffopt:append 'algorithm:histogram'
+
+-- If you are on Nvim 0.9+, this makes things even crisper:
+vim.opt.diffopt:append 'linematch:60'
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -853,7 +859,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     config = function()
       local filetypes = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
-      require('nvim-treesitter.install').ensure_installed(filetypes)
+      require('nvim-treesitter').install(filetypes)
       vim.api.nvim_create_autocmd('FileType', {
         pattern = filetypes,
         callback = function() vim.treesitter.start() end,
