@@ -10,6 +10,18 @@ A starting point for Neovim that is:
 
 **NOT** a Neovim distribution, but instead a starting point for your configuration.
 
+## Workflow Notes
+
+This fork now includes a shared Org productivity system that spans both Neovim and Emacs.
+
+The canonical workflow document lives at:
+
+- [productivity-system.org](/home/ryer/org/productivity-system.org:1)
+
+Neovim-specific notes for the modular Org setup live at:
+
+- [lua/custom/README.md](/home/ryer/.config/nvim/lua/custom/README.md:1)
+
 ## Installation
 
 ### Install Neovim
