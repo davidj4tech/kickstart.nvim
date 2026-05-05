@@ -1022,3 +1022,9 @@ vim.g.clipboard = {
     ['*'] = require('vim.ui.clipboard.osc52').paste '*',
   },
 }
+
+-- Override <leader>ss (Telescope builtin picker) with sllm ask, since sllm.nvim
+-- defaults to <leader>ss but Telescope binds it earlier and wins. Setting this
+-- after lazy/Telescope loads means our mapping takes precedence.
+vim.keymap.set("n", "<leader>ss", function() require("sllm").ask_llm() end,
+  { desc = "sllm ask", noremap = true })
