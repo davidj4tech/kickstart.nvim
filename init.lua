@@ -170,6 +170,8 @@ vim.opt.diffopt:append 'algorithm:histogram'
 -- If you are on Nvim 0.9+, this makes things even crisper:
 vim.opt.diffopt:append 'linematch:60'
 
+vim.g.python3_host_prog = vim.fn.expand '~/.local/share/nvim-venv/bin/python'
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -190,7 +192,7 @@ vim.diagnostic.config {
   virtual_lines = false, -- Text shows up underneath the line, with virtual lines
 
   -- Auto open the float, so you can easily read the errors when jumping with `[d` and `]d`
-  jump = { float = true },
+  jump = { on_jump = function() vim.diagnostic.open_float() end },
 }
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
@@ -414,7 +416,8 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
+      -- <leader>ss is owned by sllm (see end of file). Use :Telescope to reach the builtin picker.
+      vim.keymap.set('n', '<leader>ss', function() require('sllm').ask_llm() end, { desc = 'sllm ask' })
       vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
@@ -1023,8 +1026,3 @@ vim.g.clipboard = {
   },
 }
 
--- Override <leader>ss (Telescope builtin picker) with sllm ask, since sllm.nvim
--- defaults to <leader>ss but Telescope binds it earlier and wins. Setting this
--- after lazy/Telescope loads means our mapping takes precedence.
-vim.keymap.set("n", "<leader>ss", function() require("sllm").ask_llm() end,
-  { desc = "sllm ask", noremap = true })
