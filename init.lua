@@ -673,6 +673,13 @@ require('lazy').setup({
         -- You can add other tools here that you want Mason to install
       })
 
+      -- Skip mason install for tools already on $PATH (e.g. system packages on
+      -- platforms mason doesn't support, like aarch64 termux/proot).
+      local mason_binary = { lua_ls = 'lua-language-server' }
+      ensure_installed = vim.tbl_filter(function(name)
+        return vim.fn.executable(mason_binary[name] or name) == 0
+      end, ensure_installed)
+
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       for name, server in pairs(servers) do
