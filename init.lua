@@ -836,6 +836,13 @@ require('lazy').setup({
         styles = {
           comments = { italic = false }, -- Disable italics in comments
         },
+        -- Brighter grey for comments / org directives (#+TITLE:, #+filetags:),
+        -- which are unreadable at low screen brightness with the default dim
+        -- #565f89. @comment is what org directives link to.
+        on_highlights = function(hl, c)
+          hl.Comment = { fg = '#9aa5ce' }
+          hl['@comment'] = { fg = '#9aa5ce' }
+        end,
       }
 
       -- Load the colorscheme here.
