@@ -207,6 +207,10 @@ end, { desc = '[U]I: toggle [W]ord wrap' })
 vim.keymap.set('n', '<leader>un', function()
   vim.opt.number = not vim.opt.number:get()
 end, { desc = '[U]I: toggle line [N]umbers' })
+-- Toggle relative line numbers
+vim.keymap.set('n', '<leader>ur', function()
+  vim.opt.relativenumber = not vim.opt.relativenumber:get()
+end, { desc = '[U]I: toggle [R]elative numbers' })
 -- Toggle spell check
 vim.keymap.set('n', '<leader>us', function()
   vim.opt.spell = not vim.opt.spell:get()
