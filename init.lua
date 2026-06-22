@@ -197,11 +197,20 @@ vim.diagnostic.config {
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- [U]I toggles
 -- Toggle word wrap (with linebreak so it breaks at word boundaries)
-vim.keymap.set('n', '<leader>w', function()
+vim.keymap.set('n', '<leader>uw', function()
   vim.opt.wrap = not vim.opt.wrap:get()
   vim.opt.linebreak = vim.opt.wrap:get()
-end, { desc = '[W]ord wrap toggle' })
+end, { desc = '[U]I: toggle [W]ord wrap' })
+-- Toggle line numbers
+vim.keymap.set('n', '<leader>un', function()
+  vim.opt.number = not vim.opt.number:get()
+end, { desc = '[U]I: toggle line [N]umbers' })
+-- Toggle spell check
+vim.keymap.set('n', '<leader>us', function()
+  vim.opt.spell = not vim.opt.spell:get()
+end, { desc = '[U]I: toggle [S]pell check' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -332,6 +341,7 @@ require('lazy').setup({
       spec = {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>u', group = '[U]I toggles' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
       },
