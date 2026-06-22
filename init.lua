@@ -197,6 +197,12 @@ vim.diagnostic.config {
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- Toggle word wrap (with linebreak so it breaks at word boundaries)
+vim.keymap.set('n', '<leader>w', function()
+  vim.opt.wrap = not vim.opt.wrap:get()
+  vim.opt.linebreak = vim.opt.wrap:get()
+end, { desc = '[W]ord wrap toggle' })
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
