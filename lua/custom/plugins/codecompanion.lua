@@ -1,10 +1,14 @@
 -- olimorris/codecompanion.nvim — the second-model "critic" alongside claudecode.
 -- A genuinely different vendor (OpenAI) for real second opinions, not a Claude echo.
 --
--- Model: gpt-5-codex via the red5 litellm gateway (:4000), which bridges codex's
--- Responses-only API to chat/completions. One endpoint + one key (LITELLM_MASTER_KEY)
--- shared with avante's liberated lane. Swap the schema default to 'gpt-5.1' for the
--- plain chat model, or point at any litellm model_name (venice/*, hermes-4-405b, …).
+-- Driven as SUBSCRIPTION Codex over ACP (Agent Client Protocol), not the metered
+-- API — so it rides your ChatGPT plan, zero per-token cost. codecompanion's preset
+-- `codex` ACP adapter launches the `codex-acp` bridge; auth_method=chatgpt uses the
+-- `codex` CLI's OAuth login (auth_mode: chatgpt).
+--
+-- Per-host prereqs (adapter simply won't launch where absent — no error until used):
+--   • codex CLI, logged in via ChatGPT   (`codex login`)
+--   • codex-acp on PATH   (`npm i -g @agentclientprotocol/codex-acp`)
 return {
   'olimorris/codecompanion.nvim',
   dependencies = {
@@ -13,15 +17,11 @@ return {
   },
   opts = {
     adapters = {
-      http = {
+      acp = {
         codex = function()
-          return require('codecompanion.adapters').extend('openai_compatible', {
-            env = {
-              url = 'http://red5:4000',
-              api_key = 'LITELLM_MASTER_KEY',
-            },
-            schema = {
-              model = { default = 'gpt-5-codex' },
+          return require('codecompanion.adapters').extend('codex', {
+            defaults = {
+              auth_method = 'chatgpt', -- ride the ChatGPT subscription, not an API key
             },
           })
         end,
@@ -33,7 +33,7 @@ return {
     },
   },
   keys = {
-    { '<leader>cc', '<cmd>CodeCompanionChat Toggle<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion: chat' },
+    { '<leader>cc', '<cmd>CodeCompanionChat Toggle<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion: chat (Codex)' },
     { '<leader>ca', '<cmd>CodeCompanionActions<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion: actions' },
     { '<leader>ci', ':CodeCompanion ', mode = { 'n', 'v' }, desc = 'CodeCompanion: inline prompt' },
   },
