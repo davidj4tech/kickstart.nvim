@@ -16,7 +16,7 @@ return {
   'nvim-tree/nvim-tree.lua',
   version = '*',
   lazy = false,
-  dependencies = { 'nvim-tree/nvim-web-devicons' },
+  dependencies = { 'nvim-mini/mini.nvim' }, -- icons via mini.icons' nvim-web-devicons mock
   keys = {
     { '<leader>e', '<cmd>NvimTreeToggle<cr>', desc = 'Toggle file [E]xplorer' },
     { '<leader>E', '<cmd>NvimTreeFindFile<cr>', desc = 'Reveal current file in [E]xplorer' },

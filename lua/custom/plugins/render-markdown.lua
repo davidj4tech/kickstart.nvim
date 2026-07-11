@@ -4,7 +4,7 @@ return {
   'MeanderingProgrammer/render-markdown.nvim',
   dependencies = {
     'nvim-treesitter/nvim-treesitter',
-    'nvim-tree/nvim-web-devicons',
+    'nvim-mini/mini.nvim', -- icons via mini.icons' nvim-web-devicons mock
   },
   ft = { 'markdown', 'quarto', 'gitcommit' },
   ---@module 'render-markdown'
