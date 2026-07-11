@@ -257,6 +257,21 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function() vim.hl.on_yank() end,
 })
 
+-- Enable spell checking for prose filetypes
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Enable spell checking for prose filetypes',
+  group = vim.api.nvim_create_augroup('kickstart-spell', { clear = true }),
+  pattern = { 'markdown', 'gitcommit', 'text', 'tex', 'plaintex' },
+  callback = function()
+    -- Set the language before enabling spell so the region resolves first.
+    vim.opt_local.spelllang = 'en_au'
+    -- `silent!` swallows E756 so a transient spell-file hiccup can never fire a
+    -- "Press ENTER to continue" prompt mid-edit (e.g. Claude Code's
+    -- claude-prompt-*.md external-editor buffer).
+    vim.cmd 'silent! setlocal spell'
+  end,
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
