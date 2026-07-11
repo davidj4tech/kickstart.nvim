@@ -64,6 +64,9 @@ return {
       require('orgmode').setup {
         org_agenda_files = { paths.org_files },
         org_default_notes_file = paths.org_inbox,
+        -- Conceal emphasis markers (*bold* /italic/ etc). after/ftplugin/org.lua
+        -- reveals them again while in insert mode.
+        org_hide_emphasis_markers = true,
         org_capture_templates = capture.templates(paths),
         org_agenda_custom_commands = {
           k = {

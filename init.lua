@@ -261,7 +261,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Enable spell checking for prose filetypes',
   group = vim.api.nvim_create_augroup('kickstart-spell', { clear = true }),
-  pattern = { 'markdown', 'gitcommit', 'text', 'tex', 'plaintex' },
+  pattern = { 'markdown', 'gitcommit', 'text', 'tex', 'plaintex', 'org' },
   callback = function()
     -- Set the language before enabling spell so the region resolves first.
     vim.opt_local.spelllang = 'en_au'
