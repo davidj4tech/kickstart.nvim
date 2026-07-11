@@ -1,6 +1,9 @@
 {
   "LuaSnip": { "branch": "master", "commit": "642b0c595e11608b4c18219e93b88d7637af27bc" },
+  "avante.nvim": { "branch": "main", "commit": "2183acf00831a3ab366265ee35eef1a342716694" },
   "blink.cmp": { "branch": "main", "commit": "78336bc89ee5365633bcf754d93df01678b5c08f" },
+  "claudecode.nvim": { "branch": "main", "commit": "2390c6e45c4789072c293ac69de051d169668b29" },
+  "codecompanion.nvim": { "branch": "main", "commit": "44de5603f252d3cd80ad4fb851e6484719fb20d1" },
   "conform.nvim": { "branch": "master", "commit": "619363c30309d29ffa631e67c8183f2a72caa373" },
   "denote.nvim": { "branch": "main", "commit": "29835481715e2b8a899b9a0e3ec3986b860afea1" },
   "diffview.nvim": { "branch": "main", "commit": "4516612fe98ff56ae0415a259ff6361a89419b0a" },
@@ -14,6 +17,7 @@
   "mini.notify": { "branch": "main", "commit": "7e75de73c60590e3f35d5cecd5677a68a437fc54" },
   "mini.nvim": { "branch": "main", "commit": "44657837c7338e52727facc85c1d95bec1f6bd7c" },
   "mini.pick": { "branch": "main", "commit": "4522d9ab65224675df2cf1ede8c12f0410aae2be" },
+  "nui.nvim": { "branch": "main", "commit": "de740991c12411b663994b2860f1a4fd0937c130" },
   "nvim-lspconfig": { "branch": "master", "commit": "6f76a3eeadc2ee235d74cd7d5319e95a261084af" },
   "nvim-tree.lua": { "branch": "master", "commit": "85d1145ac71c1b8e1423862c78165a1f609faf60" },
   "nvim-treesitter": { "branch": "main", "commit": "4916d6592ede8c07973490d9322f187e07dfefac" },
