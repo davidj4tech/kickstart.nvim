@@ -280,6 +280,21 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- Treat unnamed scratch buffers as markdown so prose config applies from the
+-- first keystroke. Guards keep plugin/terminal buffers and real files (whose
+-- filetype is detected from the name) untouched; saving to *.md later is a
+-- no-op; saving under another extension keeps markdown until the file is
+-- re-edited (`:e`), since writes don't re-run filetype detection.
+vim.api.nvim_create_autocmd('BufEnter', {
+  desc = 'Default empty unnamed buffers to markdown',
+  group = vim.api.nvim_create_augroup('kickstart-scratch-markdown', { clear = true }),
+  callback = function()
+    if vim.bo.filetype == '' and vim.bo.buftype == '' and vim.api.nvim_buf_get_name(0) == '' then
+      vim.bo.filetype = 'markdown'
+    end
+  end,
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
