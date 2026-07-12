@@ -295,20 +295,6 @@ vim.api.nvim_create_autocmd('BufEnter', {
   end,
 })
 
--- Ctrl-X Ctrl-E command-line edits get markdown too (prompt/prose drafting).
--- zsh's edit-command-line widget hardcodes TMPSUFFIX=.zsh, naming its tempfile
--- ${TMPPREFIX}XXXXXX.zsh (default /tmp/zsh…); bash's fc uses bash-fc.XXXX.
--- Patterns beat extension detection, so these override ft=zsh/sh for tempfiles
--- only — real *.zsh scripts are untouched. Trade-off: no shell highlighting
--- when editing a genuine long command; `:setf zsh` brings it back per-buffer.
-vim.filetype.add {
-  pattern = {
-    -- priority to outrank nvim's builtin bash-fc → sh pattern
-    ['.*/tmp/zsh%w+%.zsh'] = { 'markdown', { priority = 10 } },
-    ['.*/bash%-fc[%-%.]%w+'] = { 'markdown', { priority = 10 } },
-  },
-}
-
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
