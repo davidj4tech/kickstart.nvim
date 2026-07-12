@@ -295,6 +295,35 @@ vim.api.nvim_create_autocmd('BufEnter', {
   end,
 })
 
+-- Ctrl-X Ctrl-E command-line edits: keep shell filetype/highlighting, but add
+-- the prose comforts on top (a buffer has one syntax, so this is as close to
+-- "markdown + zsh at once" as it gets). Matches zsh's edit-command-line
+-- tempfile (${TMPPREFIX}XXXXXX.zsh, widget hardcodes TMPSUFFIX=.zsh) and
+-- bash's fc tempfile. For full markdown view, <leader>tm toggles the buffer.
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+  desc = 'Prose comforts in shell command-line edit buffers',
+  group = vim.api.nvim_create_augroup('kickstart-cmdline-prose', { clear = true }),
+  pattern = { '*/tmp/zsh*.zsh', '*/bash-fc[-.]*' },
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.breakindent = true
+    vim.opt_local.spelllang = 'en_au'
+    vim.cmd 'silent! setlocal spell' -- only marks comment text under shell syntax
+  end,
+})
+
+-- Toggle the current buffer between markdown (prose view) and its real
+-- filetype — for drafting prose in a Ctrl-X Ctrl-E buffer, or flipping a
+-- scratch-markdown buffer back after :w to a code file.
+vim.keymap.set('n', '<leader>tm', function()
+  if vim.bo.filetype == 'markdown' then
+    vim.bo.filetype = vim.b.tm_saved_ft or vim.filetype.match { buf = 0 } or ''
+  else
+    vim.b.tm_saved_ft = vim.bo.filetype
+    vim.bo.filetype = 'markdown'
+  end
+end, { desc = '[T]oggle [M]arkdown view' })
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
