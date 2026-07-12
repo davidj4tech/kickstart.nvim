@@ -6,44 +6,53 @@
 -- callback auto-reroutes to Venice if Claude refuses (non-streaming calls). Needs
 -- $LITELLM_MASTER_KEY in the environment (same key on every tailnet host).
 --
--- `build = make` fetches avante's prebuilt Rust helper. Those libs are glibc
+-- The `make` build fetches avante's prebuilt Rust helper. Those libs are glibc
 -- x86-64/aarch64 — they don't load under Termux (Android/bionic), so avante
--- self-disables there (p8a) via `enabled`, keeping the one shared fork uniform.
-return {
-  'yetone/avante.nvim',
-  event = 'VeryLazy',
-  version = false, -- track latest; avante's config API moves fast
-  build = 'make',
-  enabled = function()
-    return vim.env.TERMUX_VERSION == nil and vim.fn.isdirectory '/data/data/com.termux' == 0
+-- self-disables there (p8a), keeping the one shared fork uniform.
+if vim.env.TERMUX_VERSION ~= nil or vim.fn.isdirectory '/data/data/com.termux' == 1 then return end
+
+local function gh(repo) return 'https://github.com/' .. repo end
+
+-- Build hook must be registered before vim.pack.add so a fresh install runs it.
+vim.api.nvim_create_autocmd('PackChanged', {
+  group = vim.api.nvim_create_augroup('custom-avante-build', { clear = true }),
+  callback = function(ev)
+    if ev.data.spec.name ~= 'avante.nvim' then return end
+    if ev.data.kind ~= 'install' and ev.data.kind ~= 'update' then return end
+    local result = vim.system({ 'make' }, { cwd = ev.data.path }):wait()
+    if result.code ~= 0 then
+      vim.notify(('avante.nvim build failed:\n%s'):format(result.stderr or result.stdout or ''), vim.log.levels.ERROR)
+    end
   end,
-  opts = {
-    provider = 'liberated',
-    providers = {
-      liberated = {
-        __inherited_from = 'openai',
-        endpoint = 'http://red5:4000/v1',
-        model = 'claude-opus-4-8-liberated',
-        api_key_name = 'LITELLM_MASTER_KEY',
-      },
-    },
-    mappings = {
-      ask = '<leader>va',
-      edit = '<leader>ve',
-      refresh = '<leader>vr',
-      focus = '<leader>vf',
-      toggle = {
-        default = '<leader>vt',
-        debug = '<leader>vd',
-        hint = '<leader>vh',
-        suggestion = '<leader>vs',
-      },
+})
+
+vim.pack.add {
+  gh 'nvim-lua/plenary.nvim',
+  gh 'MunifTanjim/nui.nvim',
+  gh 'folke/snacks.nvim', -- configured in snacks.lua
+  gh 'yetone/avante.nvim',
+}
+
+require('avante').setup {
+  provider = 'liberated',
+  providers = {
+    liberated = {
+      __inherited_from = 'openai',
+      endpoint = 'http://red5:4000/v1',
+      model = 'claude-opus-4-8-liberated',
+      api_key_name = 'LITELLM_MASTER_KEY',
     },
   },
-  dependencies = {
-    'nvim-lua/plenary.nvim',
-    'MunifTanjim/nui.nvim',
-    'nvim-treesitter/nvim-treesitter',
-    'folke/snacks.nvim',
+  mappings = {
+    ask = '<leader>va',
+    edit = '<leader>ve',
+    refresh = '<leader>vr',
+    focus = '<leader>vf',
+    toggle = {
+      default = '<leader>vt',
+      debug = '<leader>vd',
+      hint = '<leader>vh',
+      suggestion = '<leader>vs',
+    },
   },
 }

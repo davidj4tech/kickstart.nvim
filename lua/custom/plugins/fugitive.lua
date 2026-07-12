@@ -11,26 +11,14 @@
 --   <leader>gd  :Gdiffsplit    diff working copy vs index
 --   <leader>gl  :Git log       log in pager
 --   <leader>gL  :0Glog         file history in quickfix
+local function gh(repo) return 'https://github.com/' .. repo end
 
-return {
-  {
-    'tpope/vim-fugitive',
-    cmd = { 'Git', 'G', 'Gdiffsplit', 'Gread', 'Gwrite', 'Ggrep', 'GMove', 'GRename', 'GDelete', 'GRemove', 'GBrowse', 'Gedit', 'Gsplit', 'Gvsplit', 'Gtabedit', 'Gclog', 'Glgrep' },
-    keys = {
-      { '<leader>gs', '<cmd>Git<cr>',          desc = '[G]it [S]tatus' },
-      { '<leader>gc', '<cmd>Git commit<cr>',   desc = '[G]it [C]ommit' },
-      { '<leader>gb', '<cmd>Git blame<cr>',    desc = '[G]it [B]lame' },
-      { '<leader>gd', '<cmd>Gdiffsplit<cr>',   desc = '[G]it [D]iff split' },
-      { '<leader>gl', '<cmd>Git log<cr>',      desc = '[G]it [L]og' },
-      { '<leader>gL', '<cmd>0Glog<cr>',        desc = '[G]it file [L]og (quickfix)' },
-    },
-  },
-  {
-    'folke/which-key.nvim',
-    optional = true,
-    opts = function(_, opts)
-      opts.spec = opts.spec or {}
-      table.insert(opts.spec, { '<leader>g', group = '[G]it (fugitive)' })
-    end,
-  },
-}
+vim.pack.add { gh 'tpope/vim-fugitive' }
+
+require('which-key').add { { '<leader>g', group = '[G]it (fugitive)' } }
+vim.keymap.set('n', '<leader>gs', '<cmd>Git<cr>', { desc = '[G]it [S]tatus' })
+vim.keymap.set('n', '<leader>gc', '<cmd>Git commit<cr>', { desc = '[G]it [C]ommit' })
+vim.keymap.set('n', '<leader>gb', '<cmd>Git blame<cr>', { desc = '[G]it [B]lame' })
+vim.keymap.set('n', '<leader>gd', '<cmd>Gdiffsplit<cr>', { desc = '[G]it [D]iff split' })
+vim.keymap.set('n', '<leader>gl', '<cmd>Git log<cr>', { desc = '[G]it [L]og' })
+vim.keymap.set('n', '<leader>gL', '<cmd>0Glog<cr>', { desc = '[G]it file [L]og (quickfix)' })

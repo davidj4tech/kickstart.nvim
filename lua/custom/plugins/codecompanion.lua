@@ -9,32 +9,31 @@
 -- Per-host prereqs (adapter simply won't launch where absent — no error until used):
 --   • codex CLI, logged in via ChatGPT   (`codex login`)
 --   • codex-acp on PATH   (`npm i -g @agentclientprotocol/codex-acp`)
-return {
-  'olimorris/codecompanion.nvim',
-  dependencies = {
-    'nvim-lua/plenary.nvim',
-    'nvim-treesitter/nvim-treesitter',
-  },
-  opts = {
-    adapters = {
-      acp = {
-        codex = function()
-          return require('codecompanion.adapters').extend('codex', {
-            defaults = {
-              auth_method = 'chatgpt', -- ride the ChatGPT subscription, not an API key
-            },
-          })
-        end,
-      },
-    },
-    strategies = {
-      chat = { adapter = 'codex' },
-      inline = { adapter = 'codex' },
+local function gh(repo) return 'https://github.com/' .. repo end
+
+vim.pack.add {
+  gh 'nvim-lua/plenary.nvim',
+  gh 'olimorris/codecompanion.nvim',
+}
+
+require('codecompanion').setup {
+  adapters = {
+    acp = {
+      codex = function()
+        return require('codecompanion.adapters').extend('codex', {
+          defaults = {
+            auth_method = 'chatgpt', -- ride the ChatGPT subscription, not an API key
+          },
+        })
+      end,
     },
   },
-  keys = {
-    { '<leader>cc', '<cmd>CodeCompanionChat Toggle<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion: chat (Codex)' },
-    { '<leader>ca', '<cmd>CodeCompanionActions<cr>', mode = { 'n', 'v' }, desc = 'CodeCompanion: actions' },
-    { '<leader>ci', ':CodeCompanion ', mode = { 'n', 'v' }, desc = 'CodeCompanion: inline prompt' },
+  strategies = {
+    chat = { adapter = 'codex' },
+    inline = { adapter = 'codex' },
   },
 }
+
+vim.keymap.set({ 'n', 'v' }, '<leader>cc', '<cmd>CodeCompanionChat Toggle<cr>', { desc = 'CodeCompanion: chat (Codex)' })
+vim.keymap.set({ 'n', 'v' }, '<leader>ca', '<cmd>CodeCompanionActions<cr>', { desc = 'CodeCompanion: actions' })
+vim.keymap.set({ 'n', 'v' }, '<leader>ci', ':CodeCompanion ', { desc = 'CodeCompanion: inline prompt' })

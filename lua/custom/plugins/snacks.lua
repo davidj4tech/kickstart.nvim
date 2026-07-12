@@ -1,15 +1,14 @@
 -- folke/snacks.nvim — QoL primitives (notifier, input, terminal, bigfile). Also
--- the terminal/picker dependency claudecode.nvim + avante.nvim rely on, declared
--- here so its own opts win and it loads early.
-return {
-  'folke/snacks.nvim',
-  priority = 1000,
-  lazy = false,
-  opts = {
-    bigfile = { enabled = true },
-    quickfile = { enabled = true },
-    notifier = { enabled = true },
-    input = { enabled = true },
-    terminal = {},
-  },
+-- the terminal/picker dependency claudecode.nvim + avante.nvim rely on; those
+-- files vim.pack.add it too (idempotent) but setup happens once, here.
+local function gh(repo) return 'https://github.com/' .. repo end
+
+vim.pack.add { gh 'folke/snacks.nvim' }
+
+require('snacks').setup {
+  bigfile = { enabled = true },
+  quickfile = { enabled = true },
+  notifier = { enabled = true },
+  input = { enabled = true },
+  terminal = {},
 }

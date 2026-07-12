@@ -5,4 +5,7 @@ nvim
 
 spell/
 
+# nvim-pack-lock.json IS tracked in this fork — it pins plugin SHAs across the
+# fleet the way lazy-lock.json used to (see :help vim.pack-lockfile).
+
 .DS_Store
