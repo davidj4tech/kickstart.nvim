@@ -22,9 +22,15 @@ require('toggleterm').setup {
 }
 
 vim.keymap.set('n', '<leader>tt', '<cmd>ToggleTermToggleAll<cr>', { desc = '[T]erminal [T]oggle all' })
-vim.keymap.set('n', '<leader>tf', '<cmd>ToggleTerm direction=float<cr>', { desc = '[T]erminal [F]loat' })
-vim.keymap.set('n', '<leader>th', '<cmd>ToggleTerm direction=horizontal<cr>', { desc = '[T]erminal [H]orizontal' })
-vim.keymap.set('n', '<leader>tv', '<cmd>ToggleTerm direction=vertical size=80<cr>', { desc = '[T]erminal [V]ertical' })
+vim.keymap.set('n', '<leader>tf', function()
+  vim.cmd(('%dToggleTerm direction=float'):format(vim.v.count1))
+end, { desc = '[T]erminal [F]loat' })
+vim.keymap.set('n', '<leader>th', function()
+  vim.cmd(('%dToggleTerm direction=horizontal'):format(vim.v.count1))
+end, { desc = '[T]erminal [H]orizontal' })
+vim.keymap.set('n', '<leader>tv', function()
+  vim.cmd(('%dToggleTerm direction=vertical size=80'):format(vim.v.count1))
+end, { desc = '[T]erminal [V]ertical' })
 
 local function set_terminal_keymaps()
   local kopts = { buffer = 0 }

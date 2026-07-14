@@ -7,6 +7,8 @@
 -- manages it (flips to 3 while rendering, restores your default otherwise).
 
 -- Soft wrapping for prose
+vim.opt_local.number = false
+vim.opt_local.relativenumber = false
 vim.opt_local.wrap = true          -- wrap long lines on screen
 vim.opt_local.linebreak = true     -- break at word boundaries, not mid-word
 vim.opt_local.breakindent = true   -- wrapped lines keep the paragraph's indent
@@ -28,3 +30,4 @@ vim.opt_local.formatoptions:remove 'c'   -- no auto-wrap in comments
 vim.opt_local.tabstop = 2
 vim.opt_local.shiftwidth = 2
 vim.opt_local.expandtab = true
+
