@@ -5,7 +5,6 @@ vim.pack.add {
 }
 
 require('toggleterm').setup {
-  open_mapping = [[<c-\>]],
   direction = 'horizontal',
   size = function(term)
     if term.direction == 'horizontal' then
@@ -32,17 +31,64 @@ vim.keymap.set('n', '<leader>tv', function()
   vim.cmd(('%dToggleTerm direction=vertical size=80'):format(vim.v.count1))
 end, { desc = '[T]erminal [V]ertical' })
 
-local function set_terminal_keymaps()
-  local kopts = { buffer = 0 }
-  vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], kopts)
-  vim.keymap.set('t', 'jk', [[<C-\><C-n>]], kopts)
+local function set_terminal_keymaps(bufnr)
+  bufnr = bufnr or 0
+  local kopts = { buffer = bufnr, noremap = true, silent = true }
+  vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
+  vim.keymap.set('t', 'jk', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
+  vim.keymap.set('t', '<C-]>', function()
+    vim.api.nvim_chan_send(vim.b.terminal_job_id, '\x1b')
+  end, vim.tbl_extend('force', kopts, { desc = 'Send Escape to terminal' }))
   vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], kopts)
   vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], kopts)
   vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], kopts)
   vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], kopts)
 end
 
-vim.api.nvim_create_autocmd('TermOpen', {
-  pattern = 'term://*toggleterm#*',
-  callback = set_terminal_keymaps,
+local Terminal = require('toggleterm.terminal').Terminal
+local pi_cmd = vim.env.PI_NVIM_CMD or 'pi'
+local pi_term = Terminal:new {
+  cmd = pi_cmd,
+  direction = 'float',
+  hidden = true,
+  display_name = pi_cmd,
+  auto_scroll = false,
+  on_open = function(term) set_terminal_keymaps(term.bufnr) end,
+  on_exit = function()
+    if vim.g.pi_exit_nvim then
+      vim.schedule(function() vim.cmd 'qall' end)
+    end
+  end,
+  float_opts = {
+    border = 'curved',
+    width = function() return math.max(20, vim.o.columns - 2) end,
+    height = function() return math.max(10, vim.o.lines - 2) end,
+    row = 0,
+    col = 0,
+    title_pos = 'center',
+  },
+}
+
+local pi_split = Terminal:new {
+  cmd = pi_cmd,
+  direction = 'horizontal',
+  hidden = true,
+  display_name = pi_cmd .. ' split',
+  auto_scroll = false,
+  size = function() return math.floor(vim.o.lines * 0.45) end,
+  on_open = function(term) set_terminal_keymaps(term.bufnr) end,
+}
+
+vim.api.nvim_create_user_command('Pi', function() pi_term:toggle() end, { desc = 'Toggle pi in a floating terminal' })
+vim.api.nvim_create_user_command('PiSplit', function() pi_split:toggle() end, { desc = 'Toggle pi in a scrollable split terminal' })
+vim.api.nvim_create_user_command('PiOnly', function()
+  vim.g.pi_exit_nvim = true
+  pi_term:toggle()
+end, { desc = 'Open pi and quit Neovim when pi exits' })
+vim.keymap.set('n', '<leader>tp', function() pi_term:toggle() end, { desc = '[T]erminal [P]i' })
+vim.keymap.set('n', '<leader>tP', function() pi_split:toggle() end, { desc = '[T]erminal [P]i split' })
+
+vim.api.nvim_create_autocmd({ 'TermOpen', 'TermEnter' }, {
+  pattern = 'term://*',
+  callback = function(args) set_terminal_keymaps(args.buf) end,
 })
