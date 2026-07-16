@@ -4,6 +4,11 @@ vim.pack.add {
   { src = gh 'akinsho/toggleterm.nvim', version = vim.version.range '*' }, -- stable releases
 }
 
+vim.api.nvim_set_hl(0, 'PiTerminalInsertBorder', { fg = '#00a7ff', bold = true })
+vim.api.nvim_set_hl(0, 'PiTerminalNormalBorder', { fg = '#ffb000', bold = true })
+vim.api.nvim_set_hl(0, 'PiTerminalInsertWinbar', { fg = '#001018', bg = '#00a7ff', bold = true })
+vim.api.nvim_set_hl(0, 'PiTerminalNormalWinbar', { fg = '#1f1400', bg = '#ffb000', bold = true })
+
 require('toggleterm').setup {
   direction = 'horizontal',
   size = function(term)
@@ -31,8 +36,29 @@ vim.keymap.set('n', '<leader>tv', function()
   vim.cmd(('%dToggleTerm direction=vertical size=80'):format(vim.v.count1))
 end, { desc = '[T]erminal [V]ertical' })
 
+function _G.pi_terminal_mode_label()
+  local mode = vim.api.nvim_get_mode().mode
+  if mode == 't' then
+    return '%#PiTerminalInsertWinbar# PI INSERT %#WinBar#'
+  elseif mode:match '^nt' or mode == 'n' then
+    return '%#PiTerminalNormalWinbar# PI NORMAL / SCROLL %#WinBar#'
+  end
+  return ' PI '
+end
+
+local function set_terminal_chrome(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if vim.bo[bufnr].buftype ~= 'terminal' then return end
+
+  local mode = vim.api.nvim_get_mode().mode
+  local border_hl = mode == 't' and 'PiTerminalInsertBorder' or 'PiTerminalNormalBorder'
+  vim.wo.winbar = '%{%v:lua.pi_terminal_mode_label()%}'
+  vim.wo.winhighlight = 'FloatBorder:' .. border_hl
+end
+
 local function set_terminal_keymaps(bufnr)
   bufnr = bufnr or 0
+  set_terminal_chrome(bufnr)
   local kopts = { buffer = bufnr, noremap = true, silent = true }
   vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
   vim.keymap.set('t', 'jk', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
@@ -88,7 +114,14 @@ end, { desc = 'Open pi and quit Neovim when pi exits' })
 vim.keymap.set('n', '<leader>tp', function() pi_term:toggle() end, { desc = '[T]erminal [P]i' })
 vim.keymap.set('n', '<leader>tP', function() pi_split:toggle() end, { desc = '[T]erminal [P]i split' })
 
-vim.api.nvim_create_autocmd({ 'TermOpen', 'TermEnter' }, {
+vim.api.nvim_create_autocmd({ 'TermOpen', 'TermEnter', 'BufWinEnter' }, {
   pattern = 'term://*',
   callback = function(args) set_terminal_keymaps(args.buf) end,
+})
+
+vim.api.nvim_create_autocmd('ModeChanged', {
+  callback = function()
+    set_terminal_chrome()
+    vim.cmd 'redrawstatus'
+  end,
 })
