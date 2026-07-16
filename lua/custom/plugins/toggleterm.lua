@@ -62,6 +62,8 @@ local function set_terminal_keymaps(bufnr)
   local kopts = { buffer = bufnr, noremap = true, silent = true }
   vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
   vim.keymap.set('t', 'jk', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
+  vim.keymap.set('t', '<PageUp>', [[<C-\><C-n><C-b>]], vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
+  vim.keymap.set('t', '<kPageUp>', [[<C-\><C-n><C-b>]], vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
   vim.keymap.set('t', '<C-]>', function()
     vim.api.nvim_chan_send(vim.b.terminal_job_id, '\x1b')
   end, vim.tbl_extend('force', kopts, { desc = 'Send Escape to terminal' }))
