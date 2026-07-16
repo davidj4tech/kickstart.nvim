@@ -4,9 +4,9 @@ vim.pack.add {
   { src = gh 'akinsho/toggleterm.nvim', version = vim.version.range '*' }, -- stable releases
 }
 
-vim.api.nvim_set_hl(0, 'PiTerminalInsertBorder', { fg = '#00afff', bold = true })
+vim.api.nvim_set_hl(0, 'PiTerminalInsertBorder', { fg = '#5fb3b3', bold = true })
 vim.api.nvim_set_hl(0, 'PiTerminalNormalBorder', { fg = '#8a8a8a', bold = true })
-vim.api.nvim_set_hl(0, 'PiTerminalInsertWinbar', { fg = '#001018', bg = '#00afff', bold = true })
+vim.api.nvim_set_hl(0, 'PiTerminalInsertWinbar', { fg = '#102020', bg = '#5fb3b3', bold = true })
 vim.api.nvim_set_hl(0, 'PiTerminalNormalWinbar', { fg = '#eeeeee', bg = '#4a4a4a', bold = true })
 
 require('toggleterm').setup {
