@@ -219,6 +219,19 @@ do
 
   vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+  -- Emacs-style line editing while staying in insert mode.
+  vim.keymap.set('i', '<C-a>', '<Home>', { desc = 'Emacs: beginning of line' })
+  vim.keymap.set('i', '<C-e>', '<End>', { desc = 'Emacs: end of line' })
+  vim.keymap.set('i', '<C-b>', '<Left>', { desc = 'Emacs: backward char' })
+  vim.keymap.set('i', '<C-f>', '<Right>', { desc = 'Emacs: forward char' })
+  vim.keymap.set('i', '<C-d>', '<Del>', { desc = 'Emacs: delete char' })
+  vim.keymap.set('i', '<C-h>', '<BS>', { desc = 'Emacs: backspace' })
+  vim.keymap.set('i', '<C-k>', '<C-o>D', { desc = 'Emacs: kill to end of line' })
+  vim.keymap.set('i', '<C-u>', '<C-o>d0', { desc = 'Emacs: kill to beginning of line' })
+  vim.keymap.set('i', '<M-b>', '<C-o>b', { desc = 'Emacs: backward word' })
+  vim.keymap.set('i', '<M-f>', '<C-o>w', { desc = 'Emacs: forward word' })
+  vim.keymap.set('i', '<M-d>', '<C-o>de', { desc = 'Emacs: kill word' })
+
   -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
   -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
   -- is not what someone will guess without a bit more experience.
