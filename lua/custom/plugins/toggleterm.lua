@@ -73,7 +73,32 @@ local function is_terminal_scroll_mode()
   return mode:match '^n' ~= nil
 end
 
-local function unlock_terminal_view(winid)
+local unlock_terminal_view
+
+local function terminal_view_is_at_bottom(winid)
+  winid = winid or vim.api.nvim_get_current_win()
+  if not vim.api.nvim_win_is_valid(winid) then return false end
+
+  local bufnr = vim.api.nvim_win_get_buf(winid)
+  if not is_agent_terminal(bufnr) then return false end
+
+  local info = vim.fn.getwininfo(winid)[1]
+  return info ~= nil and info.botline >= vim.api.nvim_buf_line_count(bufnr)
+end
+
+local function enter_terminal_insert_at_bottom(winid)
+  winid = winid or vim.api.nvim_get_current_win()
+  if not is_terminal_scroll_mode() or not terminal_view_is_at_bottom(winid) then return end
+
+  unlock_terminal_view(winid)
+  vim.schedule(function()
+    if vim.api.nvim_get_current_win() == winid and terminal_view_is_at_bottom(winid) then
+      vim.cmd 'startinsert'
+    end
+  end)
+end
+
+unlock_terminal_view = function(winid)
   winid = winid or vim.api.nvim_get_current_win()
   local lock = terminal_scroll_locks[winid]
   if lock and lock.timer then
@@ -136,13 +161,45 @@ end
 
 local function set_terminal_keymaps(bufnr, label)
   bufnr = bufnr or 0
+  label = label or vim.b[bufnr].agent_terminal_label
   if label then vim.b[bufnr].agent_terminal_label = label end
   set_terminal_chrome(bufnr)
   local kopts = { buffer = bufnr, noremap = true, silent = true }
-  vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
   vim.keymap.set('t', 'jk', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
   vim.keymap.set('t', '<PageUp>', [[<C-\><C-n><C-b>]], vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
   vim.keymap.set('t', '<kPageUp>', [[<C-\><C-n><C-b>]], vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
+  vim.keymap.set('t', '<C-PageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('t', '<C-kPageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('t', '<S-PageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('t', '<S-kPageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('t', '<C-PageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('t', '<C-kPageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('t', '<S-PageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('t', '<S-kPageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('t', '<C-Up>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('t', '<C-Down>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('n', '<C-PageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('n', '<C-kPageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('n', '<S-PageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('n', '<S-kPageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('n', '<C-PageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('n', '<C-kPageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('n', '<S-PageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('n', '<S-kPageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('n', '<C-Up>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('n', '<C-Down>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  vim.keymap.set('n', '<PageDown>', '<C-f>', vim.tbl_extend('force', kopts, { desc = 'Page down terminal scrollback' }))
+  vim.keymap.set('n', '<kPageDown>', '<C-f>', vim.tbl_extend('force', kopts, { desc = 'Page down terminal scrollback' }))
+  vim.keymap.set('n', '<PageUp>', '<C-b>', vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
+  vim.keymap.set('n', '<kPageUp>', '<C-b>', vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
+  local function open_agent_external_editor()
+    local shortcut = label == 'CLAUDE' and '\x18\x05' or '\x07'
+    vim.api.nvim_chan_send(vim.b.terminal_job_id, shortcut)
+  end
+  vim.keymap.set('n', '<M-e>', open_agent_external_editor, vim.tbl_extend('force', kopts, { desc = 'Open agent external editor' }))
+  vim.keymap.set('n', '<Esc>e', open_agent_external_editor, vim.tbl_extend('force', kopts, { desc = 'Open agent external editor' }))
+  vim.keymap.set('n', '<Home>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
+  vim.keymap.set('n', '<End>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
   vim.keymap.set('t', '<C-]>', function()
     vim.api.nvim_chan_send(vim.b.terminal_job_id, '\x1b')
   end, vim.tbl_extend('force', kopts, { desc = 'Send Escape to terminal' }))
@@ -150,6 +207,33 @@ local function set_terminal_keymaps(bufnr, label)
   vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], kopts)
   vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], kopts)
   vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], kopts)
+end
+
+function _G.agent_terminal_send_to_label(label, data)
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(bufnr) and vim.b[bufnr].agent_terminal_label == label then
+      local job_id = vim.b[bufnr].terminal_job_id
+      if job_id then
+        vim.api.nvim_chan_send(job_id, data)
+        vim.defer_fn(function()
+          for _, winid in ipairs(vim.api.nvim_list_wins()) do
+            if vim.api.nvim_win_is_valid(winid) and vim.api.nvim_win_get_buf(winid) == bufnr then
+              unlock_terminal_view(winid)
+              vim.api.nvim_win_call(winid, function()
+                if vim.api.nvim_get_mode().mode == 't' then
+                  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>G', true, false, true), 'n', false)
+                else
+                  vim.cmd 'normal! G'
+                end
+              end)
+            end
+          end
+        end, 50)
+        return true
+      end
+    end
+  end
+  return false
 end
 
 local Terminal = require('toggleterm.terminal').Terminal
@@ -260,7 +344,7 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   end,
 })
 
-vim.api.nvim_create_autocmd('WinScrolled', {
+vim.api.nvim_create_autocmd({ 'WinScrolled', 'CursorMoved' }, {
   group = agent_terminal_group,
   callback = function()
     local winid = vim.api.nvim_get_current_win()
@@ -268,6 +352,7 @@ vim.api.nvim_create_autocmd('WinScrolled', {
     if lock and not lock.restoring and is_terminal_scroll_mode() then
       lock.view = vim.fn.winsaveview()
     end
+    enter_terminal_insert_at_bottom(winid)
   end,
 })
 

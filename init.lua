@@ -228,6 +228,8 @@ do
   vim.keymap.set('i', '<C-h>', '<BS>', { desc = 'Emacs: backspace' })
   vim.keymap.set('i', '<C-k>', '<C-o>D', { desc = 'Emacs: kill to end of line' })
   vim.keymap.set('i', '<C-u>', '<C-o>d0', { desc = 'Emacs: kill to beginning of line' })
+  vim.keymap.set('i', '<M-BS>', '<C-w>', { desc = 'Shell: delete word backward' })
+  vim.keymap.set('i', '<M-Backspace>', '<C-w>', { desc = 'Shell: delete word backward' })
   vim.keymap.set('i', '<M-b>', '<C-o>b', { desc = 'Emacs: backward word' })
   vim.keymap.set('i', '<M-f>', '<C-o>w', { desc = 'Emacs: forward word' })
   vim.keymap.set('i', '<M-d>', '<C-o>de', { desc = 'Emacs: kill word' })
