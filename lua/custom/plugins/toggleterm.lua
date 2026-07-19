@@ -57,6 +57,83 @@ local function set_terminal_chrome(bufnr)
   vim.wo.winhighlight = 'FloatBorder:' .. border_hl
 end
 
+local terminal_scroll_locks = {}
+
+local function is_agent_terminal(bufnr)
+  return vim.bo[bufnr].buftype == 'terminal' and vim.b[bufnr].agent_terminal_label ~= nil
+end
+
+local function should_lock_terminal_view()
+  local mode = vim.api.nvim_get_mode().mode
+  return mode == 'n' or mode == 'nt'
+end
+
+local function is_terminal_scroll_mode()
+  local mode = vim.api.nvim_get_mode().mode
+  return mode:match '^n' ~= nil
+end
+
+local function unlock_terminal_view(winid)
+  winid = winid or vim.api.nvim_get_current_win()
+  local lock = terminal_scroll_locks[winid]
+  if lock and lock.timer then
+    lock.timer:stop()
+    lock.timer:close()
+  end
+  terminal_scroll_locks[winid] = nil
+end
+
+local function unlock_terminal_buffer(bufnr)
+  for winid, lock in pairs(terminal_scroll_locks) do
+    if lock.bufnr == bufnr then unlock_terminal_view(winid) end
+  end
+end
+
+local function lock_terminal_view(winid)
+  winid = winid or vim.api.nvim_get_current_win()
+  if not vim.api.nvim_win_is_valid(winid) or not should_lock_terminal_view() then return end
+
+  local bufnr = vim.api.nvim_win_get_buf(winid)
+  if not is_agent_terminal(bufnr) then return end
+
+  local lock = terminal_scroll_locks[winid]
+  if not lock then
+    lock = { bufnr = bufnr, view = vim.fn.winsaveview(), restoring = false }
+    terminal_scroll_locks[winid] = lock
+  else
+    lock.bufnr = bufnr
+    lock.view = vim.fn.winsaveview()
+  end
+
+  if lock.timer then return end
+
+  lock.timer = vim.uv.new_timer()
+  lock.timer:start(50, 50, vim.schedule_wrap(function()
+    local active_lock = terminal_scroll_locks[winid]
+    if not active_lock then return end
+    if not should_lock_terminal_view() then
+      unlock_terminal_view(winid)
+      return
+    end
+    if not vim.api.nvim_win_is_valid(winid) or not vim.api.nvim_buf_is_valid(active_lock.bufnr) then
+      unlock_terminal_view(winid)
+      return
+    end
+
+    active_lock.restoring = true
+    vim.api.nvim_win_call(winid, function()
+      local current_view = vim.fn.winsaveview()
+      vim.fn.winrestview(vim.tbl_extend('force', current_view, {
+        topline = active_lock.view.topline,
+        topfill = active_lock.view.topfill,
+        leftcol = active_lock.view.leftcol,
+        skipcol = active_lock.view.skipcol,
+      }))
+    end)
+    active_lock.restoring = false
+  end))
+end
+
 local function set_terminal_keymaps(bufnr, label)
   bufnr = bufnr or 0
   if label then vim.b[bufnr].agent_terminal_label = label end
@@ -159,14 +236,43 @@ vim.keymap.set('n', '<leader>tP', function() pi_split:toggle() end, { desc = '[T
 vim.keymap.set('n', '<leader>tc', function() claude_term:toggle() end, { desc = '[T]erminal [C]laude' })
 vim.keymap.set('n', '<leader>tC', function() claude_split:toggle() end, { desc = '[T]erminal [C]laude split' })
 
+local agent_terminal_group = vim.api.nvim_create_augroup('CustomAgentTerminal', { clear = true })
+
 vim.api.nvim_create_autocmd({ 'TermOpen', 'TermEnter', 'BufWinEnter' }, {
+  group = agent_terminal_group,
   pattern = 'term://*',
   callback = function(args) set_terminal_keymaps(args.buf) end,
 })
 
 vim.api.nvim_create_autocmd('ModeChanged', {
+  group = agent_terminal_group,
   callback = function()
-    set_terminal_chrome()
+    local winid = vim.api.nvim_get_current_win()
+    set_terminal_chrome(vim.api.nvim_win_get_buf(winid))
+
+    if should_lock_terminal_view() then
+      lock_terminal_view(winid)
+    else
+      unlock_terminal_view(winid)
+    end
+
     vim.cmd 'redrawstatus'
   end,
+})
+
+vim.api.nvim_create_autocmd('WinScrolled', {
+  group = agent_terminal_group,
+  callback = function()
+    local winid = vim.api.nvim_get_current_win()
+    local lock = terminal_scroll_locks[winid]
+    if lock and not lock.restoring and is_terminal_scroll_mode() then
+      lock.view = vim.fn.winsaveview()
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ 'BufWipeout', 'TermClose' }, {
+  group = agent_terminal_group,
+  pattern = 'term://*',
+  callback = function(args) unlock_terminal_buffer(args.buf) end,
 })
