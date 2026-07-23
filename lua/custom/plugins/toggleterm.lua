@@ -6,6 +6,7 @@ vim.pack.add {
 
 vim.api.nvim_set_hl(0, 'AgentTerminalInsertBorder', { fg = '#5fb3b3', bold = true })
 vim.api.nvim_set_hl(0, 'AgentTerminalNormalBorder', { fg = '#8a8a8a', bold = true })
+vim.api.nvim_set_hl(0, 'AgentTerminalNormalFloat', { bg = 'NONE' })
 vim.api.nvim_set_hl(0, 'AgentTerminalInsertWinbar', { fg = '#102020', bg = '#5fb3b3', bold = true })
 vim.api.nvim_set_hl(0, 'AgentTerminalNormalWinbar', { fg = '#eeeeee', bg = '#4a4a4a', bold = true })
 
@@ -19,6 +20,9 @@ require('toggleterm').setup {
     end
   end,
   shade_terminals = true,
+  highlights = {
+    NormalFloat = { bg = 'NONE' },
+  },
   start_in_insert = true,
   persist_size = true,
   persist_mode = true,
@@ -54,7 +58,11 @@ local function set_terminal_chrome(bufnr)
   local mode = vim.api.nvim_get_mode().mode
   local border_hl = mode == 't' and 'AgentTerminalInsertBorder' or 'AgentTerminalNormalBorder'
   vim.wo.winbar = '%{%v:lua.agent_terminal_mode_label()%}'
-  vim.wo.winhighlight = 'FloatBorder:' .. border_hl
+  vim.wo.winhighlight = table.concat({
+    'Normal:AgentTerminalNormalFloat',
+    'NormalFloat:AgentTerminalNormalFloat',
+    'FloatBorder:' .. border_hl,
+  }, ',')
 end
 
 local terminal_scroll_locks = {}
