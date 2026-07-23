@@ -192,10 +192,17 @@ local function set_terminal_keymaps(bufnr, label)
     end, vim.tbl_extend('force', kopts, { expr = true, desc = desc }))
   end
   local t_page_up = [[<C-\><C-n><C-b>]]
+  local t_page_down = [[<C-\><C-n><C-f>]]
   local t_to_top = [[<C-\><C-n>gg]]
   local t_to_bottom = [[<C-\><C-n>G]]
   for _, lhs in ipairs { '<PageUp>', '<kPageUp>' } do
     scroll_map('t', lhs, t_page_up, 'Page up terminal scrollback')
+  end
+  -- Map plain PageDown in terminal (insert) mode too. Without this it is only
+  -- mapped in normal mode, so pressing it while inserting leaks the raw escape
+  -- (^[[6~) into pi, which echoes it at the bottom of the log buffer.
+  for _, lhs in ipairs { '<PageDown>', '<kPageDown>' } do
+    scroll_map('t', lhs, t_page_down, 'Page down terminal scrollback')
   end
   for _, lhs in ipairs { '<C-PageUp>', '<C-kPageUp>', '<S-PageUp>', '<S-kPageUp>', '<C-Up>' } do
     scroll_map('t', lhs, t_to_top, 'Top of terminal scrollback')
