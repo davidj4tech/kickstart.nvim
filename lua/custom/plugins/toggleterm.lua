@@ -59,6 +59,15 @@ end
 
 local terminal_scroll_locks = {}
 
+-- Timestamp (ms) of the last user-issued scroll key. WinScrolled fires for both
+-- real user scrolls and pi's inline repaints; only the former should be allowed
+-- to re-pin lock.view. Without this gate an output repaint that momentarily
+-- shoves topline to ~1 gets captured and the 50ms timer holds you at the top.
+local last_scroll_intent = 0
+local function note_scroll_intent()
+  last_scroll_intent = vim.uv.now()
+end
+
 local function is_agent_terminal(bufnr)
   return vim.bo[bufnr].buftype == 'terminal' and vim.b[bufnr].agent_terminal_label ~= nil
 end
@@ -166,40 +175,44 @@ local function set_terminal_keymaps(bufnr, label)
   set_terminal_chrome(bufnr)
   local kopts = { buffer = bufnr, noremap = true, silent = true }
   vim.keymap.set('t', 'jk', [[<C-\><C-n>]], vim.tbl_extend('force', kopts, { desc = 'Exit terminal mode' }))
-  vim.keymap.set('t', '<PageUp>', [[<C-\><C-n><C-b>]], vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
-  vim.keymap.set('t', '<kPageUp>', [[<C-\><C-n><C-b>]], vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
-  vim.keymap.set('t', '<C-PageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('t', '<C-kPageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('t', '<S-PageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('t', '<S-kPageUp>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('t', '<C-PageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('t', '<C-kPageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('t', '<S-PageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('t', '<S-kPageDown>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('t', '<C-Up>', [[<C-\><C-n>gg]], vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('t', '<C-Down>', [[<C-\><C-n>G]], vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('n', '<C-PageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('n', '<C-kPageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('n', '<S-PageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('n', '<S-kPageUp>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('n', '<C-PageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('n', '<C-kPageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('n', '<S-PageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('n', '<S-kPageDown>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('n', '<C-Up>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('n', '<C-Down>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
-  vim.keymap.set('n', '<PageDown>', '<C-f>', vim.tbl_extend('force', kopts, { desc = 'Page down terminal scrollback' }))
-  vim.keymap.set('n', '<kPageDown>', '<C-f>', vim.tbl_extend('force', kopts, { desc = 'Page down terminal scrollback' }))
-  vim.keymap.set('n', '<PageUp>', '<C-b>', vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
-  vim.keymap.set('n', '<kPageUp>', '<C-b>', vim.tbl_extend('force', kopts, { desc = 'Page up terminal scrollback' }))
+  -- Scroll maps stamp user intent before moving the view, so the WinScrolled
+  -- handler can tell a real scroll from an output-driven repaint.
+  local function scroll_map(mode, lhs, rhs, desc)
+    vim.keymap.set(mode, lhs, function()
+      note_scroll_intent()
+      return vim.api.nvim_replace_termcodes(rhs, true, true, true)
+    end, vim.tbl_extend('force', kopts, { expr = true, desc = desc }))
+  end
+  local t_page_up = [[<C-\><C-n><C-b>]]
+  local t_to_top = [[<C-\><C-n>gg]]
+  local t_to_bottom = [[<C-\><C-n>G]]
+  for _, lhs in ipairs { '<PageUp>', '<kPageUp>' } do
+    scroll_map('t', lhs, t_page_up, 'Page up terminal scrollback')
+  end
+  for _, lhs in ipairs { '<C-PageUp>', '<C-kPageUp>', '<S-PageUp>', '<S-kPageUp>', '<C-Up>' } do
+    scroll_map('t', lhs, t_to_top, 'Top of terminal scrollback')
+  end
+  for _, lhs in ipairs { '<C-PageDown>', '<C-kPageDown>', '<S-PageDown>', '<S-kPageDown>', '<C-Down>' } do
+    scroll_map('t', lhs, t_to_bottom, 'Bottom of terminal scrollback')
+  end
+  for _, lhs in ipairs { '<C-PageUp>', '<C-kPageUp>', '<S-PageUp>', '<S-kPageUp>', '<C-Up>' } do
+    scroll_map('n', lhs, 'gg', 'Top of terminal scrollback')
+  end
+  for _, lhs in ipairs { '<C-PageDown>', '<C-kPageDown>', '<S-PageDown>', '<S-kPageDown>', '<C-Down>' } do
+    scroll_map('n', lhs, 'G', 'Bottom of terminal scrollback')
+  end
+  scroll_map('n', '<PageDown>', '<C-f>', 'Page down terminal scrollback')
+  scroll_map('n', '<kPageDown>', '<C-f>', 'Page down terminal scrollback')
+  scroll_map('n', '<PageUp>', '<C-b>', 'Page up terminal scrollback')
+  scroll_map('n', '<kPageUp>', '<C-b>', 'Page up terminal scrollback')
   local function open_agent_external_editor()
     local shortcut = label == 'CLAUDE' and '\x18\x05' or '\x07'
     vim.api.nvim_chan_send(vim.b.terminal_job_id, shortcut)
   end
   vim.keymap.set('n', '<M-e>', open_agent_external_editor, vim.tbl_extend('force', kopts, { desc = 'Open agent external editor' }))
   vim.keymap.set('n', '<Esc>e', open_agent_external_editor, vim.tbl_extend('force', kopts, { desc = 'Open agent external editor' }))
-  vim.keymap.set('n', '<Home>', 'gg', vim.tbl_extend('force', kopts, { desc = 'Top of terminal scrollback' }))
-  vim.keymap.set('n', '<End>', 'G', vim.tbl_extend('force', kopts, { desc = 'Bottom of terminal scrollback' }))
+  scroll_map('n', '<Home>', 'gg', 'Top of terminal scrollback')
+  scroll_map('n', '<End>', 'G', 'Bottom of terminal scrollback')
   vim.keymap.set('t', '<C-]>', function()
     vim.api.nvim_chan_send(vim.b.terminal_job_id, '\x1b')
   end, vim.tbl_extend('force', kopts, { desc = 'Send Escape to terminal' }))
@@ -349,7 +362,8 @@ vim.api.nvim_create_autocmd({ 'WinScrolled', 'CursorMoved' }, {
   callback = function()
     local winid = vim.api.nvim_get_current_win()
     local lock = terminal_scroll_locks[winid]
-    if lock and not lock.restoring and is_terminal_scroll_mode() then
+    if lock and not lock.restoring and is_terminal_scroll_mode()
+      and (vim.uv.now() - last_scroll_intent) <= 150 then
       lock.view = vim.fn.winsaveview()
     end
     enter_terminal_insert_at_bottom(winid)
