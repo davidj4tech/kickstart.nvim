@@ -267,11 +267,21 @@ end
 local Terminal = require('toggleterm.terminal').Terminal
 local pi_cmd = vim.env.PI_NVIM_CMD or 'pi'
 local claude_cmd = vim.env.CLAUDE_NVIM_CMD or 'claude --dangerously-skip-permissions'
+
+-- The `p` shell function builds PI_NVIM_CMD with zsh ${(q)} quoting, so args
+-- arrive backslash-escaped (e.g. `pi cd/ci\ pipeline`). termopen() reparses the
+-- string through the shell, so `cmd` must keep the escapes, but the float border
+-- title (display_name) should show the human-readable command.
+local function display_command(cmd)
+  return (cmd:gsub('\\(.)', '%1'))
+end
+local pi_display = display_command(pi_cmd)
+local claude_display = display_command(claude_cmd)
 local pi_term = Terminal:new {
   cmd = pi_cmd,
   direction = 'float',
   hidden = true,
-  display_name = pi_cmd,
+  display_name = pi_display,
   auto_scroll = false,
   on_open = function(term) set_terminal_keymaps(term.bufnr, 'PI') end,
   on_exit = function()
@@ -293,7 +303,7 @@ local pi_split = Terminal:new {
   cmd = pi_cmd,
   direction = 'horizontal',
   hidden = true,
-  display_name = pi_cmd .. ' split',
+  display_name = pi_display .. ' split',
   auto_scroll = false,
   size = function() return math.floor(vim.o.lines * 0.45) end,
   on_open = function(term) set_terminal_keymaps(term.bufnr, 'PI') end,
@@ -303,7 +313,7 @@ local claude_term = Terminal:new {
   cmd = claude_cmd,
   direction = 'float',
   hidden = true,
-  display_name = claude_cmd,
+  display_name = claude_display,
   auto_scroll = false,
   on_open = function(term) set_terminal_keymaps(term.bufnr, 'CLAUDE') end,
   on_exit = function()
@@ -325,7 +335,7 @@ local claude_split = Terminal:new {
   cmd = claude_cmd,
   direction = 'horizontal',
   hidden = true,
-  display_name = claude_cmd .. ' split',
+  display_name = claude_display .. ' split',
   auto_scroll = false,
   size = function() return math.floor(vim.o.lines * 0.45) end,
   on_open = function(term) set_terminal_keymaps(term.bufnr, 'CLAUDE') end,
